@@ -1,0 +1,2 @@
+python mkIIIFmanifest.py
+pause
