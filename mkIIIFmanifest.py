@@ -1,12 +1,11 @@
-#!/usr/local/bin/python3
-
 # coding: utf-8
 
 # ======================================================================
-# makemanifest
+# makeIIIFmanifest
 # IIIF manifest の生成
 # ======================================================================
 # 2020-05-23 Ver.0.1: Initial Version.
+# 2020-05-30 Ver.0.2: imagebaseURI are manifestbaseURI are introduced.
 # ======================================================================
 
 # モジュールの輸入
@@ -19,20 +18,19 @@ import codecs
 # --- 利用者環境に応じて設定する情報 ここから ---
 
 # 入力: json ファイル (utf-8)
-# {<Identifier>: { "label": ..., "description":, "license": ..., "attribution": }, ...}
+# {<Identifier>: { "imagebaseURI": ..., "manifestbaseURI": ..., "label": ..., "description":, "license": ..., "attribution": }, ...}
 indata_path = os.path.join(os.getcwd(), 'data.json')
 
 # 出力: json ファイル (utf-8)
 # manifest は <identifier>.json という名前で作られる．
 # 出力ディレクトリ
 outdata_dir_path = os.path.join(os.getcwd(), 'output')
-#outdata_dir_path = os.path.join('C:'+os.sep, 'inetpub', 'wwwroot', 'IIIF')
     
-# info.json を問い合わせる IIIF サーバ の URI
-iiif_server_uri_header = 'http://localhost/cgi-bin/dzi-iiif.cgi?IIIF='
+# info.json を問い合わせる IIIF サーバ のURIのデフォルト値
+default_iiif_server_uri_header = 'http://localhost/cgi-bin/dzi-iiif.cgi?IIIF='
 
-# manifest が置かれる URI
-manifest_uri_header = 'http://localhost/IIIF'
+# manifest が置かれるディレクトリのURIのデフォルト値
+default_manifest_uri_header = 'http://localhost/IIIF'
 
 # サムネイル画像の大きさ（横幅）
 thumbnail_width = 400
@@ -68,6 +66,8 @@ with codecs.open(indata_path, 'r', 'utf_8') as f:
 
 for identifier, dict in indata.items(): # identifier と属性値辞書を取得
     print(identifier)
+    iiif_server_uri_header = dict['imagebaseURI'] if ('imagebaseURI' in dict) else default_iiif_server_uri_header
+    manifest_uri_header = dict['manifestbaseURI'] if ('manifestbaseURI' in dict) else default_manifest_uri_header
     iiif_server_uri_header_plus_identifier = iiif_server_uri_header + '/' + identifier
     manifest_uri_header_plus_identifier = manifest_uri_header + '/' + identifier
     # 画像サイズの情報を IIIF サーバから取得
@@ -80,9 +80,7 @@ for identifier, dict in indata.items(): # identifier と属性値辞書を取得
     outdata['@context'] = 'http://iiif.io/api/presentation/2/context.json'
     outdata['@id'] = manifest_uri_header_plus_identifier + '.json'
     outdata['@type'] = 'sc:Manifest'
-    if ('label' in dict):
-        outdata['label'] = dict['label']
-    #fi
+    outdata['label'] = dict['label'] if ('label' in dict) else identifier
     if ('description' in dict):
         outdata['description'] = dict['description']
     #fi
